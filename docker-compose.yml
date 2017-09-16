@@ -1,0 +1,98 @@
+version: '3.1'
+
+volumes:
+  minio_data:
+  redis_data:
+  postgres_data:
+  elasticsearch_data:
+
+networks:
+  backend:
+  frontend:
+
+services:
+  # Our Database Service:
+  postgres:
+    image: postgres:9.6-alpine
+    labels:
+      com.icalialabs.plis.group: dependencies
+    ports:
+      # We'll bind our host's port 5432 to postgres's port 5432:
+      - ${NUXEO_TEST_PG_PORT:-5432}:5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data      # Mount the postgres data volume
+    networks:
+      - backend
+    environment:
+      # The POSTGRES_USER  will also be used as the name for the default database that is created
+      # when the image is first started:
+      POSTGRES_USER: nuxeo
+      POSTGRES_PASSWORD: 3x4mpl3
+
+  # Our Redis Service:
+  redis:
+    image: redis:3-alpine
+    labels:
+      com.icalialabs.plis.group: dependencies
+    ports:
+      - ${NUXEO_TEST_REDIS_PORT:-6379}:6379
+    volumes:
+      - redis_data:/var/lib/redis
+    command: redis-server --appendonly yes
+    networks:
+      - backend
+
+  # Our Blob Storage Service (compatible with Amazon S3 SDKs)
+  minio:
+    image: minio/minio
+    labels:
+      com.icalialabs.plis.group: dependencies
+    ports:
+      - ${NUXEO_TEST_MINIO_PORT:-9000}:9000
+    volumes:
+      - minio_data:/export
+    command: server /export
+    networks:
+      - backend
+      - frontend
+    environment:
+      MINIO_ACCESS_KEY: ${NUXEO_TEST_MINIO_ACCESS_KEY:-9000AKIAIOSFODNN7EXAMPLE}
+      MINIO_SECRET_KEY: ${NUXEO_TEST_MINIO_SECRET_KEY:-wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY}
+
+  # Our Elasticsearch:
+  elasticsearch:
+    # Very important to use version 2.x (Don't you think Elasticsearch was fucked after that?)
+    image: elasticsearch:2-alpine
+    labels:
+      com.icalialabs.plis.group: dependencies
+    ports:
+      - ${NUXEO_TEST_ES_PORT:-9200}:9200
+    command: "elasticsearch -Des.cluster.name=nuxeoCluster"
+    networks:
+      - backend
+      - frontend
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+
+  # Finally the nuxeo service:
+  nuxeo:
+    # image + build: We'll tell docker-compose to build the given image with our dockerfile:
+    image: icalialabs/nuxeo-test-drive:latest
+    build:
+      context: .
+    ports:
+      - ${NUXEO_TEST_WEB_PORT:-8080}:8080
+    networks:
+      - backend
+      - frontend
+    depends_on:
+      - minio
+      - redis
+      - postgres
+      - elasticsearch
+    environment:
+      NUXEO_DB_TYPE: postgresql
+      NUXEO_DB_HOST: postgres
+      NUXEO_DB_PASSWORD: 3x4mpl3
+      NUXEO_ES_HOSTS: elasticsearch:9300
+      NUXEO_REDIS_HOST: redis
