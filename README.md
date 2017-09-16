@@ -73,9 +73,12 @@ plis start dependencies
 plis start nuxeo && plis logs -f
 ```
 
-Go over to [localhost:8080](http://localhost:8080)
+Go over to [localhost:8080](http://localhost:8080). The default login is `Administrator` : `Administrator`
+(Case sensitive username! WTF?)
 
-By default, nuxeo will not have an UI - I'll later add the UI packages once I figure out how to
+Be informed: By default, nuxeo does not provide a UI. The UI was added afterwards (see the
+`docker-compose.yml`) so it makes perfect sense to me to use it as a content foundation for any
+content-driven app we may do (playbooks? etc)
 
 ## More info - PLEASE READ!
 

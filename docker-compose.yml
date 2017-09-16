@@ -96,3 +96,7 @@ services:
       NUXEO_DB_PASSWORD: 3x4mpl3
       NUXEO_ES_HOSTS: elasticsearch:9300
       NUXEO_REDIS_HOST: redis
+      # Nuxeo Add-Ons:
+      # - nuxeo-web-ui: Nuxeo Web UI - https://doc.nuxeo.com/nxdoc/web-ui/
+      # - nuxeo-jsf-ui: The Back office view on the content repository - https://doc.nuxeo.com/nxdoc/nuxeo-jsf-ui/
+      NUXEO_PACKAGES: nuxeo-web-ui nuxeo-jsf-ui
